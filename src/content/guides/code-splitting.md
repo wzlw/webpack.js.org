@@ -112,13 +112,12 @@ another.bundle.js  544 kB       1  [emitted]  [big]  another
 
 ## 防止重复(prevent duplication)
 
-[`CommonsChunkPlugin`](/plugins/commons-chunk-plugin) 插件可以将公共的依赖模块提取到已有的入口 chunk 中，或者提取到一个新生成的 chunk。让我们使用这个插件，将之前的示例中重复的 `lodash` 模块去除：
+[`SplitChunks`](/plugins/split-chunks-plugin) 可以将公共的依赖模块提取到已有的入口 chunk 中，或者提取到一个新生成的 chunk。让我们使用这个插件，将之前的示例中重复的 `lodash` 模块去除：
 
 __webpack.config.js__
 
 ``` diff
   const path = require('path');
-+ const webpack = require('webpack');
   const HTMLWebpackPlugin = require('html-webpack-plugin');
 
   module.exports = {
@@ -129,39 +128,42 @@ __webpack.config.js__
     plugins: [
       new HTMLWebpackPlugin({
         title: 'Code Splitting'
--     })
-+     }),
-+     new webpack.optimize.CommonsChunkPlugin({
-+       name: 'common' // 指定公共 bundle 的名称。
-+     })
+      })
     ],
     output: {
       filename: '[name].bundle.js',
       path: path.resolve(__dirname, 'dist')
-    }
+    },
++   optimization: {
++     splitChunks: {
++       chunks: 'all'
++     }
++   }
   };
 ```
 
-这里我们使用 [`CommonsChunkPlugin`](/plugins/commons-chunk-plugin) 之后，现在应该可以看出，`index.bundle.js` 中已经移除了重复的依赖模块。需要注意的是，CommonsChunkPlugin 插件将 `lodash` 分离到单独的 chunk，并且将其从 main bundle 中移除，减轻了大小。执行 `npm run build` 查看效果：
+这里我们使用 [`SplitChunks`](/plugins/split-chunks-plugin) 之后，现在应该可以看出，`index.bundle.js` 中已经移除了重复的依赖模块。需要注意的是，SplitChunks 插件将 `lodash` 分离到单独的 chunk，并且将其从 main bundle 中移除，减轻了大小。执行 `npm run build` 查看效果：
 
 ``` bash
-Hash: 70a59f8d46ff12575481
-Version: webpack 2.6.1
-Time: 510ms
-            Asset       Size  Chunks                    Chunk Names
-  index.bundle.js  665 bytes       0  [emitted]         index
-another.bundle.js  537 bytes       1  [emitted]         another
- common.bundle.js     547 kB       2  [emitted]  [big]  common
-   [0] ./~/lodash/lodash.js 540 kB {2} [built]
-   [1] (webpack)/buildin/global.js 509 bytes {2} [built]
-   [2] (webpack)/buildin/module.js 517 bytes {2} [built]
-   [3] ./src/another-module.js 87 bytes {1} [built]
-   [4] ./src/index.js 216 bytes {0} [built]
+Hash: ac2ac6042ebb4f20ee54
+Version: webpack 4.7.0
+Time: 316ms
+                          Asset      Size                 Chunks             Chunk Names
+              another.bundle.js  5.95 KiB                another  [emitted]  another
+                index.bundle.js  5.89 KiB                  index  [emitted]  index
+vendors~another~index.bundle.js   547 KiB  vendors~another~index  [emitted]  vendors~another~index
+Entrypoint index = vendors~another~index.bundle.js index.bundle.js
+Entrypoint another = vendors~another~index.bundle.js another.bundle.js
+[./node_modules/webpack/buildin/global.js] (webpack)/buildin/global.js 489 bytes {vendors~another~index} [built]
+[./node_modules/webpack/buildin/module.js] (webpack)/buildin/module.js 497 bytes {vendors~another~index} [built]
+[./src/another-module.js] 88 bytes {another} [built]
+[./src/index.js] 86 bytes {index} [built]
+    + 1 hidden module
 ```
 
 以下是由社区提供的，一些对于代码分离很有帮助的插件和 loaders：
 
-- [`ExtractTextPlugin`](/plugins/extract-text-webpack-plugin): 用于将 CSS 从主应用程序中分离。
+- [`mini-css-extract-plugin`](/plugins/mini-css-extract-plugin): 用于将 CSS 从主应用程序中分离。
 - [`bundle-loader`](/loaders/bundle-loader): 用于分离代码和延迟加载生成的 bundle。
 - [`promise-loader`](https://github.com/gaearon/promise-loader): 类似于 `bundle-loader` ，但是使用的是 promises。
 
